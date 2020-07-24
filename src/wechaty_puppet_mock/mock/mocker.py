@@ -29,14 +29,16 @@ from collections import defaultdict
 from wechaty_puppet import (
     ContactPayload,
     RoomPayload,
-    MessagePayload
+    MessagePayload,
+
+    Puppet
 )
 from wechaty import (
     Contact,
     Room
 )
 
-from wechaty_puppet_mock.mock.envrioment import MockEnvironment
+from wechaty_puppet_mock.mock.envrioment import EnvironmentMock
 from wechaty_puppet_mock.exceptions import WechatyPuppetMockError
 
 
@@ -51,16 +53,23 @@ class Mocker:
         self._message_payload_pool: Dict[str, MessagePayload] = \
             defaultdict(MessagePayload)
 
-        self._environment: Optional[MockEnvironment] = None
+        self._environment: Optional[EnvironmentMock] = None
+        self.Contact: Type[Contact] = Contact
+        self.Room: Type[Room] = Room
+
+    def init_puppet(self, puppet: Puppet):
+        """init the puppet """
+        self.Contact.set_puppet(puppet)
+        self.Room.set_puppet(puppet)
 
     @property
-    def environment(self) -> MockEnvironment:
+    def environment(self) -> EnvironmentMock:
         """get the environment for mocker"""
         if not self._environment:
             raise WechatyPuppetMockError('environment not found')
         return self._environment
 
-    def use(self, environment: MockEnvironment):
+    def use(self, environment: EnvironmentMock):
         """use the environment to support rooms contacts"""
         self._contact_payload_pool = environment.get_room_payloads()
         self._room_payload_pool = environment.get_room_payloads()
@@ -69,12 +78,5 @@ class Mocker:
 
     def create_contact(self) -> Contact:
         """create random contact"""
-        self
-
-
-
-
-
-
-
+        payload = self.environment.new_contact_payload()
 

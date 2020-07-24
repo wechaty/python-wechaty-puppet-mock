@@ -36,6 +36,7 @@ from wechaty_puppet import (
     FileBox
 )
 from wechaty_puppet_mock.config import get_image_base64_data
+from wechaty_puppet_mock.exceptions import MockEnvironmentError
 from faker import Faker
 
 faker = Faker('zh-CH')
@@ -43,7 +44,7 @@ faker = Faker('zh-CH')
 BASE_URL = os.path.abspath(os.path.basename(__file__))
 
 
-class MockEnvironment:
+class EnvironmentMock:
     """get the simple mock environment"""
 
     def __init__(self,
@@ -83,6 +84,27 @@ class MockEnvironment:
         )
         return payload
 
+    def _get_random_room_payload(self) -> RoomPayload:
+        """get random room payload"""
+        temp_id = faker.uuid4()
+        contact_ids = list(self._contact_payload_pool.keys())
+        if not contact_ids:
+            raise MockEnvironmentError('there are no contacts in the '
+                                       'environment, so, you can not '
+                                       'create room')
+        random_payload = RoomPayload(
+            id=f'room-{temp_id}',
+            topic=faker.sentence(),
+            avatar=get_image_base64_data(),
+            owner_id=self._login_user_payload.id,
+            admin_ids=[],
+            member_ids=random.sample(
+                contact_ids,
+                random.randint(0, len(contact_ids))
+            )
+        )
+        return random_payload
+
     def _init_contacts(self, contact_num: int):
         """init contacts payload"""
         # read sample file content from FileBox
@@ -92,31 +114,22 @@ class MockEnvironment:
 
     def _init_rooms(self, room_num: int):
         """init rooms payload after contacts created"""
-        avatar = get_image_base64_data()
-        contact_ids = list(self._contact_payload_pool.keys())
         for i in range(room_num):
-            temp_id = faker.uuid4()
-            random_payload = RoomPayload(
-                id=f'room-{temp_id}',
-                topic=faker.sentence(),
-                avatar=avatar,
-                owner_id=self._login_user_payload.id,
-                admin_ids=[],
-                member_ids=random.sample(
-                    contact_ids,
-                    random.randint(0, len(contact_ids))
-                )
-            )
-            self._room_payload_pool[random_payload.id] = random_payload
+            room_payload = self._get_random_room_payload()
+            self._room_payload_pool[room_payload.id] = room_payload
 
     def new_room_payload(self) -> RoomPayload:
         """create room payload"""
-        random_room_payload = self._get_random_contact_payload()
+        random_room_payload = self._get_random_room_payload()
         self._room_payload_pool[random_room_payload.id] = random_room_payload
         return random_room_payload
 
     def new_contact_payload(self) -> ContactPayload:
-        """create """
+        """create new random contact payload"""
+        random_contact_paylaod = self._get_random_contact_payload()
+        self._contact_payload_pool[random_contact_paylaod.id] = \
+            random_contact_paylaod
+        return random_contact_paylaod
 
     def get_room_payloads(self) -> List[RoomPayload]:
         """get fake room payloads"""

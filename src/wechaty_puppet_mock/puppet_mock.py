@@ -20,6 +20,7 @@ limitations under the License.
 from __future__ import annotations
 
 from typing import List, Optional
+from dataclasses import dataclass
 
 from wechaty_puppet import (
     Puppet, FileBox, RoomQueryFilter,
@@ -36,11 +37,19 @@ from wechaty_puppet.schemas.types import (
     RoomMemberPayload
 )
 
+from wechaty_puppet_mock import Mocker
+
+
+@dataclass
+class PuppetMockOptions(PuppetOptions):
+    mocker: Optional[Mocker] = None
+
 
 class PuppetMock(Puppet):
     """mock for puppet"""
-    def __init__(self, options: PuppetOptions, name: str = 'puppet-mock'):
+    def __init__(self, options: PuppetMockOptions, name: str = 'puppet-mock'):
         super().__init__(options, name)
+        self.mocker: Optional[Mocker] = options.mocker
 
     async def message_image(self, message_id: str,
                             image_type: ImageType) -> FileBox:

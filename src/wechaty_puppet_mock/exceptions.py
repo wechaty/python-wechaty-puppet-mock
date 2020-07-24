@@ -32,3 +32,7 @@ class WechatyPuppetMockError(Exception):
 
     def __str__(self):
         return repr(self)
+
+
+class MockEnvironmentError(WechatyPuppetMockError):
+    """environment mock error"""
