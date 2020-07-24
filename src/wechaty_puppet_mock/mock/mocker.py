@@ -20,7 +20,9 @@ limitations under the License.
 from typing import (
     Optional,
     Dict,
-    Type
+    Type,
+    List,
+    Union
 )
 from uuid import uuid4
 from collections import defaultdict
@@ -29,6 +31,13 @@ from wechaty_puppet import (
     RoomPayload,
     MessagePayload
 )
+from wechaty import (
+    Contact,
+    Room
+)
+
+from wechaty_puppet_mock.mock.envrioment import MockEnvironment
+from wechaty_puppet_mock.exceptions import WechatyPuppetMockError
 
 
 class Mocker:
@@ -41,6 +50,31 @@ class Mocker:
             defaultdict(RoomPayload)
         self._message_payload_pool: Dict[str, MessagePayload] = \
             defaultdict(MessagePayload)
+
+        self._environment: Optional[MockEnvironment] = None
+
+    @property
+    def environment(self) -> MockEnvironment:
+        """get the environment for mocker"""
+        if not self._environment:
+            raise WechatyPuppetMockError('environment not found')
+        return self._environment
+
+    def use(self, environment: MockEnvironment):
+        """use the environment to support rooms contacts"""
+        self._contact_payload_pool = environment.get_room_payloads()
+        self._room_payload_pool = environment.get_room_payloads()
+
+        self._environment = environment
+
+    def create_contact(self) -> Contact:
+        """create random contact"""
+        self
+
+
+
+
+
 
 
 

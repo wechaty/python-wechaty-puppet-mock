@@ -109,6 +109,15 @@ class MockEnvironment:
             )
             self._room_payload_pool[random_payload.id] = random_payload
 
+    def new_room_payload(self) -> RoomPayload:
+        """create room payload"""
+        random_room_payload = self._get_random_contact_payload()
+        self._room_payload_pool[random_room_payload.id] = random_room_payload
+        return random_room_payload
+
+    def new_contact_payload(self) -> ContactPayload:
+        """create """
+
     def get_room_payloads(self) -> List[RoomPayload]:
         """get fake room payloads"""
         return list(self._room_payload_pool.values())
