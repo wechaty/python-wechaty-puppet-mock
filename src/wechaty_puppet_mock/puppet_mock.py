@@ -44,7 +44,7 @@ class PuppetMock(Puppet):
 
     async def message_image(self, message_id: str,
                             image_type: ImageType) -> FileBox:
-        """"""
+        """get image from message"""
         pass
 
     async def ding(self, data: Optional[str] = None):
@@ -99,10 +99,10 @@ class PuppetMock(Puppet):
     async def message_send_url(self, conversation_id: str, url: str) -> str:
         pass
 
-    async def message_send_mini_program(
-        self, conversation_id: str,
-        mini_program: MiniProgramPayload
-    ) -> str:
+    async def message_send_mini_program(self,
+                                        conversation_id: str,
+                                        mini_program: MiniProgramPayload
+                                        ) -> str:
         pass
 
     async def message_search(self, query: Optional[MessageQueryFilter] = None

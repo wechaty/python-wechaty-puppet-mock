@@ -1,10 +1,12 @@
 """room mock code"""
+from wechaty_puppet_mock.mock import Mocker
 
 
-def mock_for_room():
-    """simple code for room mocker"""
-    pass
+def mocker():
+    mocker = Mocker()
+
+
 
 
 if __name__ == '__main__':
-    mock_for_room()
+    mocker()
