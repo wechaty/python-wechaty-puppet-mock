@@ -32,6 +32,5 @@ async def mocker_example():
     await bot.start()
 
 
-
 if __name__ == '__main__':
     asyncio.run(mocker_example())
