@@ -22,6 +22,8 @@ from __future__ import annotations
 from typing import List, Optional
 from dataclasses import dataclass
 
+from pyee import AsyncIOEventEmitter
+
 from wechaty_puppet import (
     Puppet, FileBox, RoomQueryFilter,
     MiniProgramPayload, UrlLinkPayload, MessageQueryFilter,
@@ -50,6 +52,8 @@ class PuppetMock(Puppet):
     def __init__(self, options: PuppetMockOptions, name: str = 'puppet-mock'):
         super().__init__(options, name)
         self.mocker: Optional[Mocker] = options.mocker
+        self.started: bool = False
+        self.emitter = AsyncIOEventEmitter()
 
     async def message_image(self, message_id: str,
                             image_type: ImageType) -> FileBox:
@@ -60,19 +64,25 @@ class PuppetMock(Puppet):
         pass
 
     def on(self, event_name: str, caller):
-        pass
+        """listen event"""
+        self.emitter.on(event_name, caller)
 
     def listener_count(self, event_name: str) -> int:
-        pass
+        """get the event count of the specific event"""
+        listeners = self.emitter.listeners(event=event_name)
+        return len(listeners)
 
     async def start(self) -> None:
-        pass
+        """star the account"""
+        self.started = True
 
     async def stop(self):
-        pass
+        """stop the account"""
+        self.started = False
 
     async def contact_list(self) -> List[str]:
-        pass
+        """get all of the contact"""
+        return self.mocker.get_contact_ids()
 
     async def tag_contact_delete(self, tag_id: str) -> None:
         pass
@@ -95,6 +105,7 @@ class PuppetMock(Puppet):
 
     async def message_send_text(self, conversation_id: str, message: str,
                                 mention_ids: List[str] = None) -> str:
+        """send the text message to the specific contact/room"""
         pass
 
     async def message_send_contact(self, contact_id: str,

@@ -80,3 +80,10 @@ class Mocker:
         """create random contact"""
         payload = self.environment.new_contact_payload()
 
+    def get_contact_ids(self) -> List[str]:
+        """get all of the contact_id list"""
+        return list(self._contact_payload_pool.keys())
+
+    def get_room_ids(self) -> List[str]:
+        """get all of the room_id list"""
+        return list(self._room_payload_pool.keys())
