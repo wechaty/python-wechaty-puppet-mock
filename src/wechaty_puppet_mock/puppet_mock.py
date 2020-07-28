@@ -44,6 +44,7 @@ from wechaty_puppet_mock import Mocker
 
 @dataclass
 class PuppetMockOptions(PuppetOptions):
+    """options for puppet mock"""
     mocker: Optional[Mocker] = None
 
 
@@ -58,7 +59,6 @@ class PuppetMock(Puppet):
     async def message_image(self, message_id: str,
                             image_type: ImageType) -> FileBox:
         """get image from message"""
-        pass
 
     async def ding(self, data: Optional[str] = None):
         pass
