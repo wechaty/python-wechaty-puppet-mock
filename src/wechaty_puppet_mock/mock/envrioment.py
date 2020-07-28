@@ -138,3 +138,14 @@ class EnvironmentMock:
     def get_contact_payloads(self) -> List[ContactPayload]:
         """get fake contact payloads"""
         return list(self._contact_payload_pool.values())
+
+    def add_message_payload(self, message_payload: MessagePayload):
+        """add a message payload to the pool"""
+        self._message_payload_pool[message_payload.id] = message_payload
+
+    def get_message_payload(self, message_id: str) -> MessagePayload:
+        """get a message payload by message_id"""
+        if message_id not in self._message_payload_pool:
+            raise KeyError('message payload <%s> not in pool', message_id)
+
+        return self._message_payload_pool[message_id]
