@@ -154,6 +154,13 @@ class EnvironmentMock:
         """get fake contact payloads"""
         return list(self._contact_payload_pool.values())
 
+    def get_contact_payload(self, contact_id: str) -> ContactPayload:
+        """get contact payload by id"""
+        if contact_id not in self._contact_payload_pool:
+            raise MockEnvironmentError(f'contact <{contact_id}> '
+                                       f'not in environment')
+        return self._contact_payload_pool[contact_id]
+
     def add_message_payload(self, message_payload: MessagePayload):
         """add a message payload to the pool"""
         self._message_payload_pool[message_payload.id] = message_payload
