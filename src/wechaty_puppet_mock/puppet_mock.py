@@ -19,10 +19,12 @@ limitations under the License.
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Union
 from dataclasses import dataclass
 
 from pyee import AsyncIOEventEmitter
+
+from wechaty import Contact
 
 from wechaty_puppet import (
     Puppet, FileBox, RoomQueryFilter,
@@ -39,7 +41,7 @@ from wechaty_puppet.schemas.types import (
     RoomMemberPayload
 )
 
-from wechaty_puppet_mock import Mocker
+from wechaty_puppet_mock.mock.mocker import Mocker
 
 
 @dataclass
@@ -139,36 +141,64 @@ class PuppetMock(Puppet):
         pass
 
     async def message_file(self, message_id: str) -> FileBox:
-        pass
+        """get the file-box from message instance
+
+        save the file-box data in message_payload.text field to avoid creating a
+        new structure to support this feature
+        """
+        message_payload = self.mocker.environment.get_message_payload(
+            message_id=message_id
+        )
+        return FileBox.from_json(message_payload.text)
 
     async def message_contact(self, message_id: str) -> str:
-        pass
+        """get the message Contact id info
+
+            text field save the message contact_id info
+        """
+        message_payload = self.mocker.environment.get_message_payload(
+            message_id=message_id
+        )
+        return message_payload.text
 
     async def message_url(self, message_id: str) -> UrlLinkPayload:
-        pass
+        """get the url link """
 
     async def message_mini_program(self, message_id: str) -> MiniProgramPayload:
         pass
 
     async def contact_alias(self, contact_id: str,
                             alias: Optional[str] = None) -> str:
-        pass
+        """get/save the contact alias"""
+        contact_payload = self.mocker.environment.\
+            get_contact_payload(contact_id)
+        if not alias:
+            return contact_payload.alias
+        contact_payload.alias = alias
+        self.mocker.environment.update_contact_payload(contact_payload)
 
     async def contact_payload_dirty(self, contact_id: str):
         pass
 
     async def contact_payload(self, contact_id: str) -> ContactPayload:
-        pass
+        """get the contact payload"""
+        return self.mocker.environment.get_contact_payload(contact_id)
 
     async def contact_avatar(self, contact_id: str,
                              file_box: Optional[FileBox] = None) -> FileBox:
-        pass
+        """get the contact avatar"""
+        contact_payload = self.mocker.environment.\
+            get_contact_payload(contact_id)
+        if not file_box:
+            return FileBox.from_base64(contact_payload.avatar)
+        contact_payload.avatar = file_box.base64
+        self.mocker.environment.update_contact_payload(contact_payload)
 
     async def contact_tag_ids(self, contact_id: str) -> List[str]:
         pass
 
     def self_id(self) -> str:
-        pass
+        return self.mocker.login_user.contact_id
 
     async def friendship_search(self, weixin: Optional[str] = None,
                                 phone: Optional[str] = None) -> Optional[str]:
@@ -186,11 +216,18 @@ class PuppetMock(Puppet):
         pass
 
     async def room_list(self) -> List[str]:
-        pass
+        """get the room id list"""
+        rooms = self.mocker.environment.get_room_payloads()
+        return [room.id for room in rooms]
 
     async def room_create(self, contact_ids: List[str],
                           topic: str = None) -> str:
-        pass
+        """create the room"""
+        room_payload = self.mocker.environment.new_room_payload(
+            member_ids=contact_ids,
+            topic=topic
+        )
+        return room_payload.id
 
     async def room_search(self, query: RoomQueryFilter = None) -> List[str]:
         pass
@@ -215,13 +252,27 @@ class PuppetMock(Puppet):
         pass
 
     async def room_payload(self, room_id: str) -> RoomPayload:
-        pass
+        """get the room payload"""
+        return self.mocker.environment.get_room_payload(room_id)
 
     async def room_members(self, room_id: str) -> List[str]:
-        pass
+        """get the room member ids from environment
+
+        Args:
+            room_id (str): the union identification for room
+
+        Returns:
+            List[str]: room member ids
+        """
+        room_payload: RoomPayload = self.mocker.environment.get_room_payload(room_id)
+        return room_payload.member_ids
 
     async def room_add(self, room_id: str, contact_id: str):
-        pass
+        """add a contact to a room"""
+        self.mocker.add_contact_to_room(
+            contact_ids=[contact_id],
+            room_id=room_id
+        )
 
     async def room_delete(self, room_id: str, contact_id: str):
         pass
@@ -249,5 +300,9 @@ class PuppetMock(Puppet):
     async def logout(self):
         pass
 
-    async def login(self, user_id: str):
-        pass
+    async def login(self, user: Union[str, Contact]):
+        """login the user data"""
+        if isinstance(user, str):
+            self.mocker.login(user_id=user)
+        else:
+            self.mocker.login(user_id=user.contact_id)
