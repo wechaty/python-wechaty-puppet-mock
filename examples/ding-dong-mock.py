@@ -32,7 +32,7 @@ async def mocker_example():
 
     # init the puppet_mock
     puppet_options = PuppetMockOptions(mocker=mocker)
-    puppet = PuppetMock(puppet_options)
+    puppet = PuppetMock(puppet_options)    
 
     # init the wechaty
     wechaty_options = WechatyOptions(
@@ -40,6 +40,8 @@ async def mocker_example():
         puppet_options=puppet_options
     )
     bot = Wechaty(wechaty_options)
+
+    mocker.init(puppet, mocker)
 
     async def on_message(msg: Message):
         from_contact = msg.talker()
