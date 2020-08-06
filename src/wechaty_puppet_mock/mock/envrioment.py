@@ -39,7 +39,7 @@ from wechaty_puppet_mock.config import get_image_base64_data
 from wechaty_puppet_mock.exceptions import MockEnvironmentError
 from faker import Faker
 
-faker = Faker('zh-CH')
+faker = Faker('zh_CN')
 
 BASE_URL = os.path.abspath(os.path.basename(__file__))
 
@@ -69,8 +69,8 @@ class EnvironmentMock:
         temp_id = faker.uuid4()
         payload = ContactPayload(
             id=f'contact-{temp_id}',
-            gender=ContactGender(faker.random.randint(0, 3)),
-            type=ContactType(faker.random.randint(0, 3)),
+            gender=ContactGender(faker.random.randint(0, 2)),
+            type=ContactType(faker.random.randint(0, 2)),
             name=faker.name(),
             avatar=get_image_base64_data(),
             address=faker.address(),
@@ -79,7 +79,7 @@ class EnvironmentMock:
             friend=True,
             province=faker.province(),
             signature=faker.sentence(),
-            star=(faker.random.randint(0, 2) % 2 == 0),
+            star=(faker.random.randint(0, 1) % 2 == 0),
             weixin=f'weixin-{temp_id}'
         )
         return payload
@@ -134,6 +134,21 @@ class EnvironmentMock:
     def get_room_payloads(self) -> List[RoomPayload]:
         """get fake room payloads"""
         return list(self._room_payload_pool.values())
+
+    def get_room_payload(self, room_id: str) -> RoomPayload:
+        """get room paylaod by room_id
+
+        Args:
+            room_id (str): the union identification for room
+
+        Returns:
+            RoomPayload: the payload data for room
+        """
+        if room_id not in self._room_payload_pool:
+            raise MockEnvironmentError(
+                f'room <{room_id}> not in environment'
+            )
+        return self._room_payload_pool[room_id]
 
     def get_contact_payloads(self) -> List[ContactPayload]:
         """get fake contact payloads"""
