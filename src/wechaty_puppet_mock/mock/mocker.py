@@ -48,7 +48,7 @@ from wechaty import (
 )
 
 if TYPE_CHECKING:
-    from wechaty import Contact
+    from wechaty import Contact, Wechaty
 
 from wechaty_puppet_mock.mock.envrioment import EnvironmentMock
 from wechaty_puppet_mock.exceptions import WechatyPuppetMockError
@@ -70,7 +70,7 @@ class Mocker(AsyncIOEventEmitter):
         self.id: str = str(uuid4())
 
         # login user is set when the method login
-        self.login_user: Optional[Contact] = None
+        self._login_user: Optional[Contact] = None
         self.has_login: bool = False
 
         self._contact_payload_pool: Dict[str, ContactPayload] = \
@@ -85,11 +85,25 @@ class Mocker(AsyncIOEventEmitter):
         self.Room: Type[Room] = Room
         self.Message: Type[Message] = Message
 
-    def init_puppet(self, puppet: Puppet):
+    @property
+    def login_user(self) -> Contact:
+        """get the login user contact"""
+        if not self._login_user:
+            raise WechatyPuppetMockError('please login before get login user')
+        return self._login_user
+
+    def init(self, puppet: Puppet, wechaty):
         """init the puppet """
+
+        log.info('init puppet for mocker')
         self.Contact.set_puppet(puppet)
         self.Room.set_puppet(puppet)
         self.Message.set_puppet(puppet)
+
+        log.info('init wechaty for mocker')
+        self.Contact.set_wechaty(wechaty)
+        self.Room.set_wechaty(wechaty)
+        self.Message.set_wechaty(wechaty)
 
     @property
     def environment(self) -> EnvironmentMock:
@@ -137,19 +151,31 @@ class Mocker(AsyncIOEventEmitter):
             type=int(EventType.EVENT_TYPE_SCAN),
             payload=json.dumps(scan_event_payload)
         )
-        self.emit('scan', response)
+        self.emit('stream', response)
 
-    def login(self, user: Contact):
+    def login(self, user_id: str):
         """emit the login user event"""
-        log.info('mock the user <%s> login event', user)
+        log.info('mock the user <%s> login event', user_id)
         login_event_payload = {
-            'contactId': user.contact_id
+            'contactId': user_id
         }
         response = MockerResponse(
             type=int(EventType.EVENT_TYPE_LOGIN),
             payload=json.dumps(login_event_payload)
         )
-        self.emit('event', response)
+        self.emit('stream', response)
+
+    def logout(self):
+        """emit the logout user event"""
+        log.info(f'mock the user <{self.login_user}> logout event')
+        response = MockerResponse(
+            type=int(EventType.EVENT_TYPE_LOGOUT),
+            payload=json.dumps({
+                'contactId': self.login_user.contact_id
+            })
+        )
+        self._login_user = None
+        self.emit('stream', response)
 
     def send_message(self,
                      talker: Contact,
@@ -186,4 +212,37 @@ class Mocker(AsyncIOEventEmitter):
                 'messageId': message_payload.id
             })
         )
-        self.emit('event', response)
+        self.emit('stream', response)
+
+    def add_contact_to_room(self, contact_ids: Union[str, List[str]],
+                            room_id: str, inviter_id: Optional[str] = None):
+        """add contact to the room"""
+
+        if not inviter_id:
+            inviter_id = self.login_user.contact_id
+
+        room_payload = self.environment.get_room_payload(room_id)
+
+        if isinstance(contact_ids, str):
+            contact_ids = [contact_ids]
+
+        for contact_id in contact_ids:
+            if contact_id in room_payload.member_ids:
+                continue
+            room_payload.member_ids.append(contact_id)
+
+        self.environment.update_room_payload(room_payload)
+
+        response = MockerResponse(
+            type=int(EventType.EVENT_TYPE_ROOM_JOIN),
+            payload=json.dumps({
+                'roomId': room_payload.id,
+                'inviterId': inviter_id,
+                'timestamp': datetime.now().timestamp() * 1000,
+                'inviteeIdList': contact_ids
+            })
+        )
+
+        self.emit('stream', response)
+
+
