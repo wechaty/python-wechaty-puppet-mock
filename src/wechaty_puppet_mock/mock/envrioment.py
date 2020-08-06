@@ -32,9 +32,10 @@ from wechaty_puppet import (
 
     RoomPayload,
     MessagePayload,
-
     FileBox
 )
+from chatie_grpc.wechaty import MessageFileResponse
+
 from wechaty_puppet_mock.config import get_image_base64_data
 from wechaty_puppet_mock.exceptions import MockEnvironmentError
 from faker import Faker
@@ -58,6 +59,9 @@ class EnvironmentMock:
             defaultdict(RoomPayload)
         self._message_payload_pool: Dict[str, MessagePayload] = \
             defaultdict(MessagePayload)
+
+        self._message_file_payload_ppol: Dict[str, MessageFileResponse] = \
+            defaultdict(MessageFileResponse)
 
         self._login_user_payload = self._get_random_contact_payload()
 
@@ -118,9 +122,18 @@ class EnvironmentMock:
             room_payload = self._get_random_room_payload()
             self._room_payload_pool[room_payload.id] = room_payload
 
-    def new_room_payload(self) -> RoomPayload:
+    def new_room_payload(self,
+                         member_ids: Optional[List[str]] = None,
+                         topic: Optional[str] = None) -> RoomPayload:
         """create room payload"""
         random_room_payload = self._get_random_room_payload()
+
+        if member_ids:
+            random_room_payload.member_ids = member_ids
+
+        if topic:
+            random_room_payload.topic = topic
+
         self._room_payload_pool[random_room_payload.id] = random_room_payload
         return random_room_payload
 
@@ -150,6 +163,14 @@ class EnvironmentMock:
             )
         return self._room_payload_pool[room_id]
 
+    def update_room_payload(self, room_payload: RoomPayload):
+        """update the room payload"""
+        if room_payload.id not in self._room_payload_pool:
+            raise MockEnvironmentError(
+                f'room <{room_payload.id}> not in environment'
+            )
+        self._room_payload_pool[room_payload.id] = room_payload
+
     def get_contact_payloads(self) -> List[ContactPayload]:
         """get fake contact payloads"""
         return list(self._contact_payload_pool.values())
@@ -160,6 +181,13 @@ class EnvironmentMock:
             raise MockEnvironmentError(f'contact <{contact_id}> '
                                        f'not in environment')
         return self._contact_payload_pool[contact_id]
+
+    def update_contact_payload(self, contact_payload: ContactPayload):
+        """update the contact payload"""
+        if contact_payload.id not in self._contact_payload_pool:
+            raise MockEnvironmentError(f'contact <{contact_payload.id}> not '
+                                       f'in environment')
+        self._contact_payload_pool[contact_payload.id] = contact_payload
 
     def add_message_payload(self, message_payload: MessagePayload):
         """add a message payload to the pool"""
