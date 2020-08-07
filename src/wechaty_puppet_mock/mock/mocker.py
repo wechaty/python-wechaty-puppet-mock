@@ -108,7 +108,7 @@ class Mocker(AsyncIOEventEmitter):
     @property
     def environment(self) -> EnvironmentMock:
         """get the environment for mocker"""
-        log.info('use the environment')
+        # log.info('use the environment')
         if not self._environment:
             raise WechatyPuppetMockError('environment not found')
         return self._environment
@@ -181,7 +181,7 @@ class Mocker(AsyncIOEventEmitter):
                      talker: Contact,
                      conversation: Union[Contact, Room],
                      msg: Union[str, FileBox],
-                     msg_type: MessageType):
+                     msg_type: MessageType = MessageType.MESSAGE_TYPE_TEXT):
         """mock the talker send message event
 
         In this version, we will only support str and FileBox message type
