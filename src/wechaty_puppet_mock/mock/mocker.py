@@ -244,5 +244,3 @@ class Mocker(AsyncIOEventEmitter):
         )
 
         self.emit('stream', response)
-
-
