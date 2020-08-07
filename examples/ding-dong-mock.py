@@ -24,6 +24,20 @@ from wechaty_puppet_mock import (
 )
 
 
+class MyBot(Wechaty):
+
+    async def on_message(self, msg: Message):
+        """"""
+        from_contact = msg.talker()
+        text = msg.text()
+        room = msg.room()
+        if text == 'ding':
+            conversation: Union[
+                Room, Contact] = from_contact if room is None else room
+            await conversation.ready()
+            await conversation.say('dong')
+
+
 async def mocker_example():
     # init the mocker
     environment = EnvironmentMock()
@@ -32,28 +46,16 @@ async def mocker_example():
 
     # init the puppet_mock
     puppet_options = PuppetMockOptions(mocker=mocker)
-    puppet = PuppetMock(puppet_options)    
+    puppet = PuppetMock(puppet_options)
 
     # init the wechaty
     wechaty_options = WechatyOptions(
         puppet=cast(Puppet, puppet),
         puppet_options=puppet_options
     )
-    bot = Wechaty(wechaty_options)
+    bot = MyBot(wechaty_options)
 
     mocker.init(puppet, mocker)
-
-    async def on_message(msg: Message):
-        from_contact = msg.talker()
-        text = msg.text()
-        room = msg.room()
-        if text == '#ding':
-            conversation: Union[
-                Room, Contact] = from_contact if room is None else room
-            await conversation.ready()
-            await conversation.say('dong')
-
-    bot.on('message', on_message)
 
     await bot.start()
 
