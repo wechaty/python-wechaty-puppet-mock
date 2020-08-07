@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 from dataclasses import dataclass
-
+import json
 from pyee import AsyncIOEventEmitter
 
 from wechaty import Contact
@@ -29,8 +29,9 @@ from wechaty import Contact
 from wechaty_puppet import (
     Puppet, FileBox, RoomQueryFilter,
     MiniProgramPayload, UrlLinkPayload, MessageQueryFilter,
-    PuppetOptions
-)
+    PuppetOptions, EventType,
+    get_logger,
+    EventMessagePayload)
 from wechaty_puppet.schemas.types import (
     MessagePayload,
     ContactPayload,
@@ -40,8 +41,11 @@ from wechaty_puppet.schemas.types import (
     RoomPayload,
     RoomMemberPayload
 )
+from wechaty_puppet_mock.exceptions import WechatyPuppetMockError
+from wechaty_puppet_mock.mock.mocker import Mocker, MockerResponse
 
-from wechaty_puppet_mock.mock.mocker import Mocker
+
+log = get_logger('PuppetMock')
 
 
 @dataclass
@@ -77,6 +81,21 @@ class PuppetMock(Puppet):
     async def start(self) -> None:
         """star the account"""
         self.started = True
+        if not self.mocker:
+            raise WechatyPuppetMockError(
+                f'PuppetMock should not start without mocker')
+
+        def _emit_events(response: MockerResponse):
+            """emit the events from the mocker"""
+            payload_data = json.loads(response.payload)
+
+            if response.type == EventType.EVENT_TYPE_MESSAGE.value:
+                log.debug('receive message info <%s>', payload_data)
+                event_message_payload = EventMessagePayload(
+                    message_id=payload_data['messageId'])
+                self.emitter.emit('message', event_message_payload)
+
+        self.mocker.on('stream', _emit_events)
 
     async def stop(self):
         """stop the account"""
@@ -135,7 +154,9 @@ class PuppetMock(Puppet):
         pass
 
     async def message_payload(self, message_id: str) -> MessagePayload:
-        pass
+        """get the message payload"""
+        return self.mocker.environment.get_message_payload(
+            message_id=message_id)
 
     async def message_forward(self, to_id: str, message_id: str):
         pass
@@ -190,7 +211,10 @@ class PuppetMock(Puppet):
         contact_payload = self.mocker.environment.\
             get_contact_payload(contact_id)
         if not file_box:
-            return FileBox.from_base64(contact_payload.avatar)
+            return FileBox.from_base64(
+                contact_payload.avatar,
+                name=f'{contact_payload.name}.png'
+            )
         contact_payload.avatar = file_box.base64
         self.mocker.environment.update_contact_payload(contact_payload)
 
@@ -264,7 +288,8 @@ class PuppetMock(Puppet):
         Returns:
             List[str]: room member ids
         """
-        room_payload: RoomPayload = self.mocker.environment.get_room_payload(room_id)
+        room_payload: RoomPayload = self.mocker.environment.get_room_payload(
+            room_id)
         return room_payload.member_ids
 
     async def room_add(self, room_id: str, contact_id: str):
