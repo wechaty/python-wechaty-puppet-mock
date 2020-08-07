@@ -29,7 +29,7 @@ import base64
 WECHATY_LOG_KEY = 'WECHATY_LOG'
 WECHATY_LOG_FILE_KEY = 'WECHATY_LOG_FILE'
 
-BASE_URL = os.path.abspath(os.path.basename(__file__))
+BASE_URL = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_logger(name: str) -> logging.Logger:
