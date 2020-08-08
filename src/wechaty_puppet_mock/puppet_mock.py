@@ -22,17 +22,17 @@ from __future__ import annotations
 from typing import List, Optional, Union
 from dataclasses import dataclass
 import json
-from pyee import AsyncIOEventEmitter
+from pyee import AsyncIOEventEmitter    # type: ignore
 
-from wechaty import Contact
+from wechaty import Contact, Room   # type: ignore
 
-from wechaty_puppet import (
+from wechaty_puppet import (    # type: ignore
     Puppet, FileBox, RoomQueryFilter,
     MiniProgramPayload, UrlLinkPayload, MessageQueryFilter,
     PuppetOptions, EventType,
     get_logger,
     EventMessagePayload)
-from wechaty_puppet.schemas.types import (
+from wechaty_puppet.schemas.types import (  # type: ignore
     MessagePayload,
     ContactPayload,
     FriendshipPayload,
@@ -54,11 +54,16 @@ class PuppetMockOptions(PuppetOptions):
     mocker: Optional[Mocker] = None
 
 
+# pylint: disable=too-many-public-methods
 class PuppetMock(Puppet):
     """mock for puppet"""
     def __init__(self, options: PuppetMockOptions, name: str = 'puppet-mock'):
         super().__init__(options, name)
-        self.mocker: Optional[Mocker] = options.mocker
+
+        if not options.mocker:
+            raise WechatyPuppetMockError('mocker in options is required')
+        self.mocker: Mocker = options.mocker
+
         self.started: bool = False
         self.emitter = AsyncIOEventEmitter()
 
@@ -83,13 +88,14 @@ class PuppetMock(Puppet):
         self.started = True
         if not self.mocker:
             raise WechatyPuppetMockError(
-                f'PuppetMock should not start without mocker')
+                'PuppetMock should not start without mocker'
+            )
 
         def _emit_events(response: MockerResponse):
             """emit the events from the mocker"""
             payload_data = json.loads(response.payload)
 
-            if response.type == EventType.EVENT_TYPE_MESSAGE.value:
+            if response.type == int(EventType.EVENT_TYPE_MESSAGE):
                 log.debug('receive message info <%s>', payload_data)
                 event_message_payload = EventMessagePayload(
                     message_id=payload_data['messageId'])
@@ -127,7 +133,18 @@ class PuppetMock(Puppet):
     async def message_send_text(self, conversation_id: str, message: str,
                                 mention_ids: List[str] = None) -> str:
         """send the text message to the specific contact/room"""
-        pass
+
+        conversation: Union[Room, Contact]
+        if conversation_id.startswith('room-'):
+            conversation = self.mocker.Room.load(conversation_id)
+        else:
+            conversation = self.mocker.Contact.load(conversation_id)
+        message_id = self.mocker.send_message(
+            talker=self.mocker.login_user,
+            conversation=conversation,
+            msg=message
+        )
+        return message_id
 
     async def message_send_contact(self, contact_id: str,
                                    conversation_id: str) -> str:
@@ -197,6 +214,7 @@ class PuppetMock(Puppet):
             return contact_payload.alias
         contact_payload.alias = alias
         self.mocker.environment.update_contact_payload(contact_payload)
+        return alias
 
     async def contact_payload_dirty(self, contact_id: str):
         pass
@@ -325,9 +343,6 @@ class PuppetMock(Puppet):
     async def logout(self):
         pass
 
-    async def login(self, user: Union[str, Contact]):
+    async def login(self, user_id: str):
         """login the user data"""
-        if isinstance(user, str):
-            self.mocker.login(user_id=user)
-        else:
-            self.mocker.login(user_id=user.contact_id)
+        self.mocker.login(user_id=user_id)
