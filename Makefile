@@ -55,7 +55,7 @@ mypy:
 
 .PHONY: pytype
 pytype:
-	pytype src/ --disable=import-error,pyi-error
+	pytype src/ --disable=import-error,pyi-error,bad-return-type
 	pytype examples/ --disable=import-error
 
 .PHONY: install
