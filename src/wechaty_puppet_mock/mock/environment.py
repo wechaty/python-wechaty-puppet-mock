@@ -25,20 +25,19 @@ from typing import (
     List
 )
 import random
-from wechaty_puppet import (
+from wechaty_puppet import (    # type: ignore
     ContactPayload,
     ContactGender,
     ContactType,
 
     RoomPayload,
-    MessagePayload,
-    FileBox
+    MessagePayload
 )
-from chatie_grpc.wechaty import MessageFileResponse
+from chatie_grpc.wechaty import MessageFileResponse     # type: ignore
 
 from wechaty_puppet_mock.config import get_image_base64_data
 from wechaty_puppet_mock.exceptions import MockEnvironmentError
-from faker import Faker
+from faker import Faker     # type: ignore
 
 faker = Faker('zh_CN')
 
