@@ -3,7 +3,7 @@ from wechaty_puppet_mock.puppet_mock import PuppetMock, PuppetMockOptions
 from wechaty_puppet_mock.exceptions import (
     MockEnvironmentError
 )
-from wechaty_puppet_mock.mock.envrioment import EnvironmentMock
+from wechaty_puppet_mock.mock.environment import EnvironmentMock
 from wechaty_puppet_mock.mock.mocker import Mocker
 
 __all__ = [
