@@ -27,11 +27,11 @@ from typing import (
 )
 from uuid import uuid4
 from collections import defaultdict
-from pyee import AsyncIOEventEmitter
+from pyee import AsyncIOEventEmitter    # type: ignore
 import json
 from datetime import datetime
 from dataclasses import dataclass
-from wechaty_puppet import (
+from wechaty_puppet import (    # type: ignore
     ContactPayload,
     RoomPayload,
     MessagePayload,
@@ -41,7 +41,7 @@ from wechaty_puppet import (
     FileBox,
     MessageType
 )
-from wechaty import (
+from wechaty import (   # type: ignore
     Contact,
     Room,
     Message
@@ -50,7 +50,7 @@ from wechaty import (
 if TYPE_CHECKING:
     from wechaty import Contact, Wechaty
 
-from wechaty_puppet_mock.mock.envrioment import EnvironmentMock
+from wechaty_puppet_mock.mock.environment import EnvironmentMock
 from wechaty_puppet_mock.exceptions import WechatyPuppetMockError
 
 log = get_logger('Mocker')
@@ -95,6 +95,11 @@ class Mocker(AsyncIOEventEmitter):
     def init(self, puppet: Puppet, wechaty):
         """init the puppet """
 
+        log.info('init the abstract')
+        self.Contact.abstract = False
+        self.Room.abstract = False
+        self.Message.abstract = False
+
         log.info('init puppet for mocker')
         self.Contact.set_puppet(puppet)
         self.Room.set_puppet(puppet)
@@ -116,15 +121,11 @@ class Mocker(AsyncIOEventEmitter):
     def use(self, environment: EnvironmentMock):
         """use the environment to support rooms contacts"""
         log.info('use the environment <{%s}>', environment)
-
-        self._contact_payload_pool = environment.get_room_payloads()
-        self._room_payload_pool = environment.get_room_payloads()
-
         self._environment = environment
 
     def new_room(self) -> Room:
         """create random room"""
-        payload = self._environment.new_room_payload()
+        payload = self.environment.new_room_payload()
         room = self.Room.load(payload.id)
         room.payload = payload
 
@@ -181,7 +182,8 @@ class Mocker(AsyncIOEventEmitter):
                      talker: Contact,
                      conversation: Union[Contact, Room],
                      msg: Union[str, FileBox],
-                     msg_type: MessageType = MessageType.MESSAGE_TYPE_TEXT):
+                     msg_type: MessageType = MessageType.MESSAGE_TYPE_TEXT
+                     ) -> str:
         """mock the talker send message event
 
         In this version, we will only support str and FileBox message type
@@ -213,6 +215,7 @@ class Mocker(AsyncIOEventEmitter):
             })
         )
         self.emit('stream', response)
+        return message_payload.id
 
     def add_contact_to_room(self, contact_ids: Union[str, List[str]],
                             room_id: str, inviter_id: Optional[str] = None):
