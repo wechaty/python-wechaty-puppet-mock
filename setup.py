@@ -67,7 +67,7 @@ def get_install_requires() -> List[str]:
 
 
 setuptools.setup(
-    name='wechaty',
+    name='wechaty-puppet-mock',
     version=get_version(),
     author='wj-Mcat (吴京京)',
     author_email='1435130236@qq.com',
