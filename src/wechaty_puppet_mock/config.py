@@ -76,4 +76,4 @@ def get_image_base64_data() -> str:
     sample_file_path = os.path.join(BASE_URL, 'mock/static/sample.jpeg')
     with open(sample_file_path, 'rb') as f:
         base64_str = base64.b64encode(f.read())
-    return base64_str
+    return str(base64_str)
