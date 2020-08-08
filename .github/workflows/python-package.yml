@@ -26,6 +26,6 @@ jobs:
     - name: Install dependencies
       run: |
         make install
-    - name: Lint with flake8
+    - name: Test
       run: |
         make test

@@ -55,13 +55,13 @@ mypy:
 
 .PHONY: pytype
 pytype:
-	pytype src/ --disable=import-error,pyi-error,bad-return-type
-	pytype examples/ --disable=import-error
+	python -m pytype src/ --disable=import-error,pyi-error,bad-return-type
+	python -m pytype examples/ --disable=import-error
 
 .PHONY: install
 install:
-	pip3 install -r requirements.txt
-	pip3 install -r requirements-dev.txt
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 
 .PHONY: pytest
 pytest:
