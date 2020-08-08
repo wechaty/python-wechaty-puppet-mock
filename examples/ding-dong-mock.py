@@ -1,19 +1,15 @@
 """room mock code"""
 import asyncio
-from typing import cast, Union
+from typing import cast
 import random
 
-from wechaty import (
-    Message,
-    Room,
-    Contact,
+from wechaty import (   # type: ignore
     Wechaty,
     WechatyOptions
 )
 
-from wechaty_puppet import (
+from wechaty_puppet import (    # type: ignore
     Puppet,
-    FileBox
 )
 
 from wechaty_puppet_mock import (
@@ -24,21 +20,9 @@ from wechaty_puppet_mock import (
 )
 
 
-class MyBot(Wechaty):
-
-    async def on_message(self, msg: Message):
-        """"""
-        from_contact = msg.talker()
-        text = msg.text()
-        room = msg.room()
-        if text == 'ding':
-            conversation: Union[
-                Room, Contact] = from_contact if room is None else room
-            await conversation.ready()
-            await conversation.say('dong')
-
-
 async def mocker_example():
+    """basic mocker example"""
+
     # init the mocker
     environment = EnvironmentMock()
     mocker = Mocker()
@@ -53,7 +37,7 @@ async def mocker_example():
         puppet=cast(Puppet, puppet),
         puppet_options=puppet_options
     )
-    bot = MyBot(wechaty_options)
+    bot = Wechaty(wechaty_options)
 
     mocker.init(puppet, mocker)
 
